@@ -3,7 +3,10 @@ module ActsAsCached
     @@nil_sentinel = :_nil
 
     def cache_config
-      @cache_config ||= {}
+      # @cache_config ||= {}
+
+      # for STI:
+      @cache_config = (name == cache_name) ? (@cache_config || {}) : base_class.cache_config
     end
 
     def cache_options
@@ -73,8 +76,8 @@ module ActsAsCached
       hash      = get_caches(*args)
 
       cache_ids.map do |key|
-        hash[key]
-      end
+        hash[key.to_s]
+      end.compact
     end
 
     def set_cache(cache_id, value, options = nil)
@@ -151,7 +154,7 @@ module ActsAsCached
     end
 
     def fetch_cachable_data(cache_id = nil)
-      finder = cache_config[:finder] || :find
+      finder = cache_config[:finder] || (cache_id.is_a?(Array) ? :find_all_by_id : :find)
       return send(finder) unless cache_id
 
       args = [cache_id]
@@ -174,7 +177,8 @@ module ActsAsCached
     end
 
     def cache_name
-      @cache_name ||= respond_to?(:model_name) ? model_name.cache_key : name
+      # @cache_name ||= respond_to?(:model_name) ? model_name.cache_key : name
+      @cache_name ||= respond_to?(:base_class) ? base_class.name : name # use defunkt's original implementation for STI
     end
 
     def cache_keys(*cache_ids)
@@ -211,6 +215,10 @@ module ActsAsCached
 
     def cached?(key = nil)
       self.class.cached? cache_id(key)
+    end
+
+    def cache_key
+      self.class.cache_key(cache_id)
     end
 
     def cache_id(key = nil)
