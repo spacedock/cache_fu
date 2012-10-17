@@ -43,7 +43,15 @@ module ActsAsCached
       keys      = cache_keys(cache_ids)
 
       # Map memcache keys to object cache_ids in { memcache_key => object_id } format
-      keys_map = Hash[*keys.zip(cache_ids).flatten]
+      if keys.size < 65000 # and cache_ids.size < 65000
+        keys_map = Hash[*keys.zip(cache_ids).flatten] # Hash[*...] breaks with > 65000 keys/cache_ids
+      else
+        zipped_keys = keys.zip(cache_ids).flatten
+        keys_map = {}
+        begin
+          keys_map.merge(Hash[*zipped_keys.unshift(65000)])
+        end until zipped_keys.empty?
+      end
 
       # Call get_multi and figure out which keys were missed based on what was a hit
       hits = Rails.cache.read_multi(*keys) || {}
