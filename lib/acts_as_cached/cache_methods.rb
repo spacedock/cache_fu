@@ -49,7 +49,7 @@ module ActsAsCached
         zipped_keys = keys.zip(cache_ids).flatten
         keys_map = {}
         begin
-          keys_map.merge(Hash[*zipped_keys.unshift(65000)])
+          keys_map.merge!(Hash[*zipped_keys.shift(65000)])
         end until zipped_keys.empty?
       end
 
