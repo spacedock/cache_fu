@@ -3,7 +3,12 @@ module ActsAsCached
     @@nil_sentinel = :_nil
 
     def cache_config
-      @cache_config ||= {}
+      # @cache_config ||= {}
+      
+      # To fix STI: 
+      # Comment.get_caches_as_list(ids) will expand ids into
+      # "comments/#{version}/#{id}" but will always miss a LookCommentt
+      @cache_config = (name == cache_name) ? (@cache_config || {}) : base_class.cache_config
     end
 
     def cache_options
@@ -182,7 +187,8 @@ module ActsAsCached
     end
 
     def cache_name
-      @cache_name ||= respond_to?(:model_name) ? model_name.cache_key : name
+      # @cache_name ||= respond_to?(:model_name) ? model_name.cache_key : name
+      @cache_name ||= respond_to?(:base_class) ? base_class.name : name # use defunkt's original implementation for STI
     end
 
     def cache_keys(*cache_ids)
