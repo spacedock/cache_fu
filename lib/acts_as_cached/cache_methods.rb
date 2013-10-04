@@ -235,9 +235,10 @@ module ActsAsCached
       cid = case
             when new_record?
               "new"
-            when timestamp = self[:updated_at]
-              timestamp = timestamp.utc.to_s(:number)
-              "#{id}-#{timestamp}"
+            # CH: this messes up get_caches_as_list when the model has an updated_at column
+            #when timestamp = self[:updated_at]
+            #  timestamp = timestamp.utc.to_s(:number)
+            #  "#{id}-#{timestamp}"
             else
               id.to_s
             end
